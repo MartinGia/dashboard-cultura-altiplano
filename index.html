@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dashboard Cultura Altiplano</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+<style>
+/* Layout: banda de encabezado + fila de KPI + rejilla de 2 columnas (madurez | riesgos) + sesgos + hoja de ruta */
+:root {
+  --bg: #f6f8f7;
+  --surface: #ffffff;
+  --surface-2: #eef4f3;
+  --ink: #1f2624;
+  --ink-2: #4c5754;
+  --muted: #6f7a77;
+  --line: #d5e0de;
+  --teal: #007983;
+  --olive: #3d4629;
+  --orange: #b85a14;
+  --orange-soft: #fbebd7;
+  --teal-soft: #e0f0ef;
+  --band: #3d4629;
+  --band-ink: #ffffff;
+  --crit: #b3261e; --crit-soft: #f9e1df;
+  --warn: #8a6a00; --warn-soft: #fbf0cc;
+  --ok: #1f7a4d; --ok-soft: #dcf1e6;
+  --font-display: "Archivo", "Arial Narrow", Arial, sans-serif;
+  --font-body: "Source Sans 3", "Segoe UI", Arial, sans-serif;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121615; --surface: #1a201f; --surface-2: #222a28; --ink: #e9efed; --ink-2: #c3ccc9; --muted: #95a19d;
+    --line: #2f3a37; --teal: #3fb7bf; --olive: #a9b886; --orange: #f0954e; --orange-soft: #3a2a1c; --teal-soft: #173033;
+    --band: #232a1a; --band-ink: #f2f5ea;
+    --crit: #ff8a80; --crit-soft: #3b1f1d; --warn: #e8c35a; --warn-soft: #352d14; --ok: #6fd3a0; --ok-soft: #173326;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121615; --surface: #1a201f; --surface-2: #222a28; --ink: #e9efed; --ink-2: #c3ccc9; --muted: #95a19d;
+  --line: #2f3a37; --teal: #3fb7bf; --olive: #a9b886; --orange: #f0954e; --orange-soft: #3a2a1c; --teal-soft: #173033;
+  --band: #232a1a; --band-ink: #f2f5ea;
+  --crit: #ff8a80; --crit-soft: #3b1f1d; --warn: #e8c35a; --warn-soft: #352d14; --ok: #6fd3a0; --ok-soft: #173326;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.45; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.band { background: var(--band); color: var(--band-ink); }
+header.band .wrap { padding-block: 22px 20px; display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; }
+.eyebrow { font-family: var(--font-display); font-weight: 600; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
+h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(26px, 4vw, 38px); line-height: 1.1; margin: 6px 0 4px; text-wrap: balance; }
+.sub { margin: 0; opacity: .9; }
+.status { display: flex; gap: 10px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font-weight: 700; font-size: 14px; }
+.chip.now { background: #b85a14; color: #fff; }
+.chip.goal { background: transparent; color: var(--band-ink); border: 1.5px solid currentColor; }
+main.wrap { padding-block: 24px 40px; display: grid; gap: 22px; }
+section { min-width: 0; }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: 20px; margin: 0; }
+.sec-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; margin-bottom: 12px; }
+.hint { color: var(--muted); font-size: 14px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; min-width: 0; }
+
+/* Segmented control */
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 8px; padding: 3px; gap: 2px; }
+.seg button { font: 600 14px var(--font-body); color: var(--ink-2); background: transparent; border: 0; border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+/* KPI */
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: grid; gap: 6px; }
+.kpi .name { font-weight: 700; font-size: 15px; }
+.kpi .formula { font-size: 13px; color: var(--muted); }
+.kpi .vals { display: flex; align-items: baseline; gap: 10px; font-variant-numeric: tabular-nums; }
+.kpi .big { font-family: var(--font-display); font-weight: 800; font-size: 34px; line-height: 1; }
+.kpi .big.base { color: var(--orange); }
+.kpi .big.meta { color: var(--teal); }
+.kpi .other { font-size: 14px; color: var(--ink-2); white-space: nowrap; }
+.kpi .big { white-space: nowrap; }
+.kpi .vals { flex-wrap: wrap; }
+.bar { position: relative; height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+.bar span { position: absolute; inset: 0 auto 0 0; border-radius: 4px; transition: width .5s ease; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+
+/* Grid 2 col */
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; }
+
+/* Westrum */
+.ladder { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; align-items: end; height: 190px; margin-top: 26px; }
+.step { position: relative; border: 0; border-radius: 8px 8px 4px 4px; background: var(--surface-2); color: var(--ink-2); cursor: pointer; padding: 8px 4px; font: 600 13px var(--font-body); display: flex; flex-direction: column; justify-content: flex-start; align-items: center; gap: 2px; text-align: center; }
+.step small { font-weight: 400; font-size: 11px; opacity: .85; }
+.step.now { background: #b85a14; color: #fff; }
+.step.goal { background: var(--surface); color: var(--teal); box-shadow: inset 0 0 0 2px var(--teal); }
+.step[aria-pressed="true"] { outline: 2px solid var(--ink); outline-offset: 2px; }
+.tag { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.step.now .tag { color: var(--orange); }
+.step.goal .tag { color: var(--teal); }
+.detail { margin-top: 14px; background: var(--surface-2); border-radius: 8px; padding: 12px 14px; min-height: 120px; }
+.detail h3 { margin: 0 0 4px; font-family: var(--font-display); font-size: 16px; }
+.detail p { margin: 0 0 6px; }
+.detail ul { margin: 4px 0 0; padding-left: 18px; }
+.detail li { margin: 2px 0; }
+
+/* Matriz */
+.matrix-wrap { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: stretch; }
+.ylab { writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.matrix { display: grid; grid-template-columns: 44px repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, 62px) auto; gap: 4px; }
+.cell { border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+.c-low { background: var(--ok-soft); } .c-mid { background: var(--warn-soft); } .c-high { background: var(--crit-soft); }
+.axis { font-size: 12px; color: var(--muted); display: flex; align-items: center; justify-content: center; }
+.dot { border: 0; border-radius: 999px; padding: 6px 10px; font: 700 13px var(--font-body); cursor: pointer; color: #fff; }
+.dot.mal { background: var(--olive); } .dot.neg { background: var(--teal); } .dot.com { background: #b85a14; }
+:root[data-theme="dark"] .dot.mal { color: #1a201f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .dot.mal { color: #1a201f; } }
+.dot[aria-pressed="true"] { outline: 2px solid var(--ink); outline-offset: 2px; }
+.xlab { grid-column: 2 / 5; text-align: center; font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.p-alta { background: var(--crit-soft); color: var(--crit); } .p-media { background: var(--warn-soft); color: var(--warn); }
+
+/* Riesgos top */
+.risks { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; }
+.risks li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 8px; background: var(--surface-2); }
+.rank { font-family: var(--font-display); font-weight: 800; color: var(--muted); width: 1.4em; text-align: center; }
+
+/* Sesgos */
+.bias-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.bias { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 10px; cursor: pointer; font: 600 14px var(--font-body); color: var(--ink); display: grid; gap: 6px; align-content: start; }
+.bias .pill { justify-self: start; }
+.bias[aria-pressed="true"] { border-color: var(--teal); box-shadow: inset 0 0 0 1px var(--teal); background: var(--teal-soft); }
+.bias-detail { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.bias-detail div { background: var(--surface-2); border-radius: 8px; padding: 12px 14px; }
+.bias-detail h4 { margin: 0 0 4px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.bias-detail p { margin: 0; }
+
+/* Roadmap */
+.gantt-scroll { overflow-x: auto; }
+.gantt { min-width: 760px; display: grid; grid-template-columns: 180px repeat(12, minmax(0, 1fr)); row-gap: 6px; column-gap: 0; font-size: 13px; }
+.q { grid-row: 1; text-align: center; color: #fff; font-weight: 700; padding: 5px 0; border-radius: 6px; margin: 0 2px; font-size: 13px; }
+.m { grid-row: 2; text-align: center; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.rl { grid-column: 1; font-weight: 700; align-self: center; padding-right: 8px; }
+.gb { border-radius: 6px; margin: 0 2px; padding: 6px 6px; color: #fff; font-weight: 600; font-size: 12px; text-align: center; line-height: 1.2; transition: opacity .2s; display: flex; align-items: center; justify-content: center; min-height: 32px; }
+.gb.dim { opacity: .18; }
+.fill-olive { background: var(--olive); } .fill-teal { background: var(--teal); } .fill-orange { background: #b85a14; } .fill-gray { background: #5b6461; }
+:root[data-theme="dark"] .fill-olive { color: #1a201f; } :root[data-theme="dark"] .fill-teal { color: #10201f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .fill-olive { color: #1a201f; } :root:not([data-theme="light"]) .fill-teal { color: #10201f; } }
+.qnote { margin-top: 12px; background: var(--surface-2); border-radius: 8px; padding: 10px 14px; }
+
+footer.wrap { padding-block: 0 32px; color: var(--muted); font-size: 13px; }
+footer p { margin: 4px 0; }
+
+@media (max-width: 980px) {
+  .two { grid-template-columns: minmax(0, 1fr); }
+  .bias-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .kpis { grid-template-columns: minmax(0, 1fr); }
+  .bias-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bias-detail { grid-template-columns: minmax(0, 1fr); }
+  .ladder { height: 170px; }
+  .step { font-size: 11px; }
+  .step small { display: none; }
+  .matrix { grid-template-columns: 38px repeat(3, minmax(0, 1fr)); }
+  .dot { font-size: 11px; padding: 4px 6px; }
+}
+
+/* Impresión: versión de dos páginas */
+@media print {
+  @page { size: letter landscape; margin: 0.35in; }
+  :root { --bg: #fff; }
+  body { font-size: 11px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .no-print { display: none !important; }
+  header.band .wrap { padding-block: 10px; }
+  h1 { font-size: 24px; }
+  main.wrap { padding-block: 10px 0; gap: 10px; max-width: none; }
+  .wrap { max-width: none; }
+  .panel { padding: 10px; }
+  .kpi { padding: 8px 10px; gap: 3px; }
+  .kpi .big { font-size: 20px; }
+  .kpi .name { font-size: 11px; }
+  .kpi .formula { font-size: 9px; }
+  #ins-detail { display: none; }
+  .two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+  h2 { font-size: 15px; }
+  .sec-head { margin-bottom: 6px; }
+  .kpis { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+  .ladder { height: 105px; margin-top: 18px; }
+  .detail { min-height: 0; padding: 8px 10px; }
+  .matrix { grid-template-rows: repeat(3, 30px) auto; }
+  .dot { padding: 3px 8px; font-size: 10px; }
+  .detail { margin-top: 8px; font-size: 10.5px; }
+  .detail h3 { font-size: 12px; }
+  .risks { margin-top: 8px; gap: 4px; }
+  .risks li { padding: 4px 8px; }
+  .page2 { break-before: page; }
+  .bias-print { display: grid !important; }
+  .q-print { display: grid !important; }
+  .bias-interactive { display: none !important; }
+  .gantt { min-width: 0; }
+  .gb { min-height: 24px; padding: 3px; font-size: 10px; }
+  .gb.dim { opacity: 1; }
+  footer.wrap { padding-block: 4px 0; font-size: 9px; }
+  footer p { margin: 1px 0; }
+  main.wrap { gap: 8px; }
+  .gantt { row-gap: 4px; }
+}
+.q-print { display: none; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.q-print div { border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font-size: 11px; }
+.bias-print { display: none; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.bias-print .bp { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.bias-print h4 { margin: 0 0 4px; font-size: 13px; display: flex; justify-content: space-between; gap: 6px; }
+.bias-print p { margin: 2px 0; font-size: 11px; }
+</style>
+</head>
+<body>
+
+
+<header class="band">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">Dashboard ejecutivo · Actividad 2A · Factores humanos en seguridad</div>
+      <h1>Cultura de seguridad de la Cooperativa Financiera Altiplano</h1>
+      <p class="sub">Diagnóstico del factor humano y programa a 12 meses · Organización ficticia con datos hipotéticos</p>
+    </div>
+    <div class="status" aria-label="Estado de madurez">
+      <span class="chip now">Hoy: nivel 3, burocrática</span>
+      <span class="chip goal">Meta: nivel 4, proactiva</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- KPI -->
+  <section aria-labelledby="h-kpi">
+    <div class="sec-head">
+      <h2 id="h-kpi">Indicadores del programa</h2>
+      <div class="seg no-print" role="group" aria-label="Valor mostrado">
+        <button id="v-base" type="button" aria-pressed="true">Línea base</button>
+        <button id="v-meta" type="button" aria-pressed="false">Meta a 12 meses</button>
+      </div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <div class="two">
+    <!-- Madurez -->
+    <section class="panel" aria-labelledby="h-mad">
+      <div class="sec-head"><h2 id="h-mad">Nivel de madurez (Westrum)</h2><span class="hint no-print">Toque un nivel</span></div>
+      <div class="ladder" id="ladder"></div>
+      <div class="detail" id="lvl-detail" aria-live="polite"></div>
+    </section>
+
+    <!-- Riesgos humanos -->
+    <section class="panel" aria-labelledby="h-risk">
+      <div class="sec-head"><h2 id="h-risk">Principales riesgos humanos</h2><span class="hint no-print">Toque un punto de la matriz</span></div>
+      <div class="matrix-wrap">
+        <div class="ylab">Impacto</div>
+        <div class="matrix" id="matrix"></div>
+      </div>
+      <div class="detail" id="ins-detail" aria-live="polite"></div>
+      <ol class="risks" id="risks"></ol>
+    </section>
+  </div>
+
+  <!-- Sesgos -->
+  <section class="panel page2" aria-labelledby="h-bias">
+    <div class="sec-head"><h2 id="h-bias">Principales sesgos identificados</h2><span class="hint no-print">Seleccione un sesgo para ver su control</span></div>
+    <div class="bias-interactive">
+      <div class="bias-grid" id="biases"></div>
+      <div class="bias-detail" id="bias-detail" aria-live="polite"></div>
+    </div>
+    <div class="bias-print" id="bias-print"></div>
+  </section>
+
+  <!-- Roadmap -->
+  <section class="panel" aria-labelledby="h-road">
+    <div class="sec-head">
+      <h2 id="h-road">Hoja de ruta de mejora</h2>
+      <div class="seg no-print" role="group" aria-label="Filtrar por trimestre" id="qseg">
+        <button type="button" data-q="0" aria-pressed="true">Todo</button>
+        <button type="button" data-q="1" aria-pressed="false">T1</button>
+        <button type="button" data-q="2" aria-pressed="false">T2</button>
+        <button type="button" data-q="3" aria-pressed="false">T3</button>
+        <button type="button" data-q="4" aria-pressed="false">T4</button>
+      </div>
+    </div>
+    <div class="gantt-scroll"><div class="gantt" id="gantt"></div></div>
+    <div class="qnote no-print" id="qnote" aria-live="polite"></div>
+    <div class="q-print" id="q-print"></div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p>Martín Gracia Socha · Maestría en Ciberseguridad, Universidad El Bosque · Docente: Lucas Adolfo Giraldo Ríos · Noviembre de 2026</p>
+  <p>Fuentes: Hudson (2003); IBM (2025); Universidad El Bosque (2026); Verizon (2025); Westrum (2004). Referencias completas en el informe ejecutivo.</p>
+</footer>
+
+<script>
+const KPI = [
+  { n: "Tasa de clic en phishing", f: "Clics / usuarios impactados", base: 18, meta: 5, unit: "%", dir: "down", lb: "18 %", lm: "< 5 %", scale: 20 },
+  { n: "Tasa de reporte", f: "Reportes / usuarios impactados", base: 7, meta: 60, unit: "%", dir: "up", lb: "7 %", lm: "≥ 60 %", scale: 100 },
+  { n: "Tiempo medio de reporte", f: "Horas entre recepción y reporte", base: 9, meta: 1, unit: "h", dir: "down", lb: "9 h", lm: "< 1 h", scale: 10 },
+  { n: "Pagos críticos verificados", f: "Con doble aprobación y devolución de llamada", base: 62, meta: 100, unit: "%", dir: "up", lb: "62 %", lm: "100 %", scale: 100 },
+  { n: "Cuentas compartidas activas", f: "Cuentas genéricas o compartidas en el core", base: 140, meta: 0, unit: "", dir: "down", lb: "140", lm: "0", scale: 150 },
+  { n: "Cobertura de champions", f: "Oficinas y áreas con champion activo", base: 0, meta: 100, unit: "%", dir: "up", lb: "0 %", lm: "100 %", scale: 100 },
+];
+const LEVELS = [
+  { n: "Patológica", s: "Oculta fallas", d: "La información se oculta, los mensajeros se castigan y las fallas se encubren." },
+  { n: "Reactiva", s: "Actúa tras incidentes", d: "La seguridad aparece solo después de un incidente; no hay procesos estables." },
+  { n: "Burocrática", s: "Cumple normas", d: "Hay políticas y auditorías, pero se cumplen por obligación. La información se canaliza por procedimientos y el error se sanciona.",
+    ev: ["Formación anual con 96 % de cumplimiento", "Simulación inicial: 18 % de clic y 7 % de reporte", "Memorando a quien hace clic: la gente calla", "Métricas de cumplimiento, no de comportamiento"] },
+  { n: "Proactiva", s: "Anticipa riesgos", d: "La organización busca riesgos antes de que ocurran: reporta sin miedo, mide comportamiento y tiene líderes visibles en seguridad.",
+    ev: ["Reporte en menos de 1 hora y sin sanción", "Security champions en cada oficina", "Análisis de incidentes sin culpa"] },
+  { n: "Generativa", s: "Aprende y mejora", d: "La seguridad es parte de cómo se trabaja; la información se busca activamente y cada falla se convierte en aprendizaje." },
+];
+const INS = {
+  mal: { n: "Insider malicioso", p: "Media", i: "Alto", e: "Analista de crédito que altera solicitudes o vende datos de asociados.", d: ["Segregación de funciones", "UEBA sobre consultas masivas", "Revisión trimestral de accesos"] },
+  neg: { n: "Insider negligente", p: "Alta", i: "Medio", e: "Colaborador que envía la base de asociados a su correo personal o a un destinatario equivocado.", d: ["DLP y etiquetado de datos", "Alertas de envíos externos", "Formación por rol"] },
+  com: { n: "Insider comprometido", p: "Alta", i: "Alto", e: "Agente del call center cuyas credenciales roba un atacante con phishing o fatiga de MFA.", d: ["MFA resistente a phishing (FIDO2)", "Alertas de acceso anómalo", "UEBA con bloqueo de sesión"] },
+};
+const RISKS = [
+  ["Credenciales robadas del call center (insider comprometido)", "Alta"],
+  ["Fraude BEC con suplantación del gerente en tesorería", "Alta"],
+  ["Vishing al call center para cambiar claves o celulares", "Alta"],
+  ["Cuentas compartidas en el core sin trazabilidad", "Media"],
+  ["Fuga de datos de asociados por envío negligente", "Media"],
+];
+const BIAS = [
+  { n: "Autoridad", pr: "Alta", m: "Un falso «gerente» ordena por correo o llamada un pago urgente a tesorería.", r: "Transferencia fraudulenta (BEC).", c: "Doble aprobación y devolución de llamada al número registrado." },
+  { n: "Urgencia o escasez", pr: "Alta", m: "«Su cuenta se bloqueará en 30 minutos»; presión del cierre de mes.", r: "Entrega de credenciales y pagos sin verificar.", c: "Tiempo mínimo de verificación para pagos críticos." },
+  { n: "Confirmación", pr: "Media", m: "El proveedor que se esperaba «cambia» su cuenta bancaria por correo.", r: "Pago a la cuenta del atacante.", c: "Validar todo cambio de datos bancarios por un canal independiente." },
+  { n: "Disponibilidad", pr: "Media", m: "«Aquí nunca ha pasado nada».", r: "Subestimar el riesgo y no reportar.", c: "Compartir casos reales del sector, sin culpa." },
+  { n: "Normalización de desviaciones", pr: "Alta", m: "Cajeros que comparten el usuario del core para agilizar la fila.", r: "Fraude interno sin trazabilidad.", c: "Tolerancia cero; acceso individual con inicio de sesión único." },
+  { n: "Efecto señuelo", pr: "Media", m: "Un falso soporte ofrece «validar ahora» o «perder el acceso».", r: "Clic inducido e instalación de acceso remoto.", c: "Mensaje institucional: «nunca le pediremos su clave»." },
+];
+const GANTT = [
+  ["Liderazgo", [[1, 2, "olive", "Comité"], [3, 12, "teal", "Red de security champions"]]],
+  ["Cultura de reporte", [[1, 3, "olive", "Botón y política"], [4, 12, "teal", "Reconocimiento y análisis sin culpa"]]],
+  ["Simulación de phishing", [[1, 1, "olive", "Base"], [2, 6, "teal", "Correo mensual"], [7, 12, "orange", "Smishing, vishing y deepfakes"]]],
+  ["Capacitación por rol", [[3, 8, "teal", "Tesorería, call center, crédito, TI"], [9, 12, "orange", "Refuerzo"]]],
+  ["Concienciación", [[2, 12, "teal", "Microlearning mensual de 3 a 5 minutos"]]],
+  ["Amenazas internas", [[1, 2, "olive", "Doble aprobación"], [4, 12, "teal", "UEBA, DLP y revisión de accesos"]]],
+  ["Medición y ajuste", [[3, 3, "gray", "KPI"], [6, 6, "gray", "KPI"], [9, 9, "gray", "KPI"], [11, 12, "orange", "Westrum"]]],
+];
+const QUARTERS = [
+  ["T1 · Fundamentos", "olive", "Comité de cultura, política de cultura justa, botón «Reportar», línea base de phishing y doble aprobación de pagos."],
+  ["T2 · Despliegue", "teal", "Capacitación por rol, microlearning mensual, red de security champions y analítica de comportamiento (UEBA)."],
+  ["T3 · Profundización", "orange", "Simulaciones de smishing, vishing y deepfakes, revisión trimestral de accesos y refuerzo por rol."],
+  ["T4 · Consolidación", "gray", "Medición final de KPI y de madurez Westrum; ajuste del programa para el segundo año."],
+];
+
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+
+// KPI
+let mode = "base";
+function renderKPI() {
+  const box = $("kpis"); box.innerHTML = "";
+  KPI.forEach((k) => {
+    const v = mode === "base" ? k.base : k.meta;
+    const good = mode === "meta";
+    const card = el("div", "kpi");
+    card.append(el("div", "name", k.n), el("div", "formula", k.f));
+    const vals = el("div", "vals");
+    vals.append(el("span", "big " + mode, mode === "base" ? k.lb : k.lm), el("span", "other", mode === "base" ? "meta " + k.lm : "hoy " + k.lb));
+    card.append(vals);
+    const bar = el("div", "bar"); const s = el("span");
+    s.style.background = good ? "var(--teal)" : "var(--orange)";
+    s.style.width = "0%";
+    bar.append(s); bar.setAttribute("aria-hidden", "true"); card.append(bar);
+    box.append(card);
+    requestAnimationFrame(() => { s.style.width = Math.max(2, Math.min(100, v / k.scale * 100)) + "%"; });
+  });
+}
+function setMode(m) {
+  mode = m; $("v-base").setAttribute("aria-pressed", m === "base"); $("v-meta").setAttribute("aria-pressed", m === "meta"); renderKPI();
+}
+$("v-base").onclick = () => setMode("base"); $("v-meta").onclick = () => setMode("meta");
+renderKPI();
+
+// Westrum
+function showLevel(i) {
+  [...$("ladder").children].forEach((b, k) => b.setAttribute("aria-pressed", k === i));
+  const L = LEVELS[i];
+  const d = $("lvl-detail");
+  d.innerHTML = `<h3>Nivel ${i + 1}: ${L.n}</h3><p>${L.d}</p>` + (L.ev ? `<ul>${L.ev.map((x) => `<li>${x}</li>`).join("")}</ul>` : "");
+}
+LEVELS.forEach((L, i) => {
+  const b = el("button", "step" + (i === 2 ? " now" : i === 3 ? " goal" : ""));
+  b.type = "button"; b.style.height = (38 + i * 15) + "%";
+  b.innerHTML = (i === 2 ? '<span class="tag">Actual</span>' : i === 3 ? '<span class="tag">Meta</span>' : "") + `<span>${L.n}</span><small>Nivel ${i + 1}</small>`;
+  b.onclick = () => showLevel(i);
+  $("ladder").append(b);
+});
+showLevel(2);
+
+// Matriz de amenazas internas
+const pos = { "Alto": 0, "Medio": 1, "Bajo": 2 }, cx = { "Baja": 0, "Media": 1, "Alta": 2 };
+const heat = [["c-mid", "c-high", "c-high"], ["c-low", "c-mid", "c-high"], ["c-low", "c-low", "c-mid"]];
+const M = $("matrix");
+["Alto", "Medio", "Bajo"].forEach((imp, r) => {
+  M.append(el("div", "axis", imp));
+  for (let c = 0; c < 3; c++) {
+    const cell = el("div", "cell " + heat[r][c]);
+    cell.style.gridRow = r + 1; cell.style.gridColumn = c + 2;
+    Object.entries(INS).forEach(([key, v]) => {
+      if (pos[v.i] === r && cx[v.p] === c) {
+        const b = el("button", "dot " + key, v.n.replace("Insider ", ""));
+        b.type = "button"; b.dataset.k = key; b.onclick = () => showIns(key); cell.append(b);
+      }
+    });
+    M.append(cell);
+  }
+});
+M.append(el("div", "axis", "")); ["Baja", "Media", "Alta"].forEach((p) => M.append(el("div", "axis", p)));
+M.append(el("div", "xlab", "Probabilidad"));
+function pill(v) { return `<span class="pill ${/Alt/.test(v) ? "p-alta" : "p-media"}">${v}</span>`; }
+function showIns(k) {
+  document.querySelectorAll(".dot").forEach((b) => b.setAttribute("aria-pressed", b.dataset.k === k));
+  const v = INS[k];
+  $("ins-detail").innerHTML = `<h3>${v.n}</h3><p>${v.e}</p><p>Probabilidad ${pill(v.p)} · Impacto ${pill(v.i)}</p><p><strong>Detección:</strong> ${v.d.join(" · ")}</p>`;
+}
+showIns("com");
+RISKS.forEach(([t, p], i) => { const li = el("li"); li.innerHTML = `<span class="rank">${i + 1}</span><span>${t}</span>${pill(p)}`; $("risks").append(li); });
+
+// Sesgos
+function showBias(i) {
+  [...$("biases").children].forEach((b, k) => b.setAttribute("aria-pressed", k === i));
+  const B = BIAS[i];
+  $("bias-detail").innerHTML = `<div><h4>Cómo se manifiesta</h4><p>${B.m}</p></div><div><h4>Riesgo</h4><p>${B.r}</p></div><div><h4>Control propuesto</h4><p>${B.c}</p></div>`;
+}
+BIAS.forEach((B, i) => {
+  const b = el("button", "bias"); b.type = "button";
+  b.innerHTML = `<span>${B.n}</span>${pill(B.pr)}`;
+  b.onclick = () => showBias(i); $("biases").append(b);
+  const p = el("div", "bp"); p.innerHTML = `<h4><span>${B.n}</span>${pill(B.pr)}</h4><p><strong>Se manifiesta:</strong> ${B.m}</p><p><strong>Riesgo:</strong> ${B.r}</p><p><strong>Control:</strong> ${B.c}</p>`;
+  $("bias-print").append(p);
+});
+showBias(0);
+
+// Hoja de ruta
+const G = $("gantt");
+QUARTERS.forEach(([t, c], q) => { const d = el("div", "q fill-" + c, t); d.style.gridColumn = `${2 + q * 3} / span 3`; G.append(d); });
+for (let m = 1; m <= 12; m++) { const d = el("div", "m", "M" + m); d.style.gridColumn = 1 + m; G.append(d); }
+GANTT.forEach(([lab, bars], r) => {
+  const row = r + 3;
+  const l = el("div", "rl", lab); l.style.gridRow = row; G.append(l);
+  bars.forEach(([a, b, c, t]) => {
+    const d = el("div", "gb fill-" + c, t); d.style.gridRow = row; d.style.gridColumn = `${1 + a} / ${2 + b}`;
+    d.dataset.a = a; d.dataset.b = b; d.title = `${lab}: ${t} (M${a}${a === b ? "" : "–M" + b})`; G.append(d);
+  });
+});
+function setQ(q) {
+  document.querySelectorAll("#qseg button").forEach((b) => b.setAttribute("aria-pressed", +b.dataset.q === q));
+  document.querySelectorAll(".gb").forEach((d) => {
+    if (!q) { d.classList.remove("dim"); return; }
+    const s = (q - 1) * 3 + 1, e = s + 2;
+    d.classList.toggle("dim", +d.dataset.b < s || +d.dataset.a > e);
+  });
+  $("qnote").innerHTML = q ? `<strong>${QUARTERS[q - 1][0]}.</strong> ${QUARTERS[q - 1][2]}` : "<strong>12 meses en cuatro trimestres.</strong> Seleccione un trimestre para ver sus hitos.";
+}
+document.querySelectorAll("#qseg button").forEach((b) => (b.onclick = () => setQ(+b.dataset.q)));
+setQ(0);
+QUARTERS.forEach(([t, c, d]) => { $("q-print").append(el("div", "", `<strong>${t}.</strong> ${d}`)); });
+</script>
+
+</body>
+</html>
